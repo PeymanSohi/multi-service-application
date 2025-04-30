@@ -1,121 +1,147 @@
-# 😂 FunStack: The Funniest Full-Stack App in Containers
+# Multi-Service Docker Application with Monitoring and Logging
 
-Welcome to **FunStack**, a multi-service Docker project featuring a humorous frontend, a Node.js Express backend, MongoDB, Redis, and an Nginx reverse proxy — all bundled together with Docker Compose, advanced Docker features, and GitHub Actions CI/CD!
+This project demonstrates a multi-service application using Docker, including various services like:
 
-## 🐳 Technologies Used
+- A React-based Web Frontend
+- A Node.js Express Backend API
+- MongoDB for data storage
+- Redis for caching
+- Nginx as a reverse proxy
+- Prometheus for monitoring and Grafana for visualization
+- Loki and Promtail for log aggregation
+- Swagger for API documentation
+- Nginx with rate limiting and security headers
 
-- **React.js**: Frontend (funny static site)
-- **Node.js + Express**: Backend API
-- **MongoDB**: Database
-- **Redis**: Caching layer
-- **Nginx**: Reverse proxy
-- **Docker Compose**: Orchestration
-- **Docker Secrets**: Sensitive data handling
-- **GitHub Actions**: CI/CD
+## Requirements
 
----
+- Docker and Docker Compose installed on your machine.
+- Node.js, MongoDB, Redis, and Nginx should be properly set up inside their respective Docker containers.
+- Prometheus, Grafana, Loki, and Promtail are integrated for monitoring and logging.
 
-## 🚀 How to Run
+## Setup
 
-1. **Clone the repo:**
-
-```bash
-git clone https://github.com/your-username/funstack.git
-cd funstack
-```
-
-2. **Create secrets:**
+### 1. Clone the Repository
 
 ```bash
-mkdir -p docker/secrets
-echo "super-secret-password" > docker/secrets/mongo_password.txt
+git clone https://github.com/PeymanSohi/multi-service-application
+cd multi-service-application
 ```
 
-3. **Build and run:**
+### 2. Environment Configuration
+
+Create a `.env` file for storing environment-specific variables:
+
+```env
+MONGO_URI=mongodb://mongo:27017/mydb
+REDIS_URI=redis://redis:6379
+SECRET_KEY=your-secret-key
+```
+
+### 3. Build the Docker Containers
+
+Ensure you have the required directories and files in place (`nginx`, `prometheus`, `loki`, etc.). Then, build the Docker containers:
 
 ```bash
 docker-compose up --build
 ```
 
-4. Visit the app:
+This will build all services and start them in containers, including:
 
-- Frontend: http://localhost
-- API: http://localhost/api
-- Nginx routes requests based on path
+- React frontend (`web` service)
+- Node.js backend API (`api` service)
+- MongoDB and Redis services
+- Prometheus and Grafana services for monitoring
+- Loki and Promtail for logs
 
----
+### 4. Accessing the Application
 
-## 🧪 GitHub Actions
+- **Frontend**: Visit [http://localhost](http://localhost) for the React application.
+- **API**: The Node.js API can be accessed at [http://localhost:8080](http://localhost:8080).
+- **Prometheus**: Visit [http://localhost:9090](http://localhost:9090) for Prometheus.
+- **Grafana**: Visit [http://localhost:3000](http://localhost:3000) for Grafana (default credentials: `admin`/`admin`).
+- **Loki Logs**: Logs can be accessed from Grafana as well.
 
-GitHub Actions is configured to:
+### 5. API Documentation with Swagger
 
-- Lint backend code
-- Build frontend and backend Docker images
-- Test Node.js backend
+Swagger UI is configured for API documentation. You can access the API documentation by visiting [http://localhost:8080/docs](http://localhost:8080/docs).
 
-### Workflow file: `.github/workflows/ci.yml`
+## Services Breakdown
 
-```yaml
-name: CI
+### 1. **Frontend (React)**
 
-on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+- The frontend is a simple React application running on the `/` route.
+- Built using Docker's multi-stage build for optimized production images.
 
-jobs:
-  build:
+### 2. **Backend (Node.js Express API)**
 
-    runs-on: ubuntu-latest
+- Provides RESTful API endpoints for the application.
+- Exposes Swagger documentation at `/docs`.
 
-    services:
-      mongo:
-        image: mongo
-        ports: [27017:27017]
-      redis:
-        image: redis
-        ports: [6379:6379]
+### 3. **Nginx (Reverse Proxy)**
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+- Handles incoming requests and routes them to the appropriate backend or frontend services.
+- Configured with rate limiting and security headers.
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
+### 4. **MongoDB**
 
-      - name: Install backend dependencies
-        working-directory: ./backend
-        run: npm ci
+- Stores data for the application.
+- Docker volumes are used to persist data.
 
-      - name: Lint backend
-        working-directory: ./backend
-        run: npm run lint || true
+### 5. **Redis**
 
-      - name: Run backend tests
-        working-directory: ./backend
-        run: npm test || echo "no tests yet"
+- Used as a caching layer to improve performance.
 
-      - name: Build Docker images
-        run: docker-compose build
-```
+### 6. **Prometheus**
 
----
+- Collects and stores metrics from the application and system.
+- Configured with exporters to collect system-level metrics and application-level metrics.
 
-## 🛡️ Security & Best Practices
+### 7. **Grafana**
 
-- 🗝 Uses Docker Secrets for sensitive data (like DB passwords)
-- 🔍 Linting & testing backend
-- 🩺 Health checks for all services (add in `docker-compose.yml`)
-- 💽 Volumes for persistent data
-- 🔄 Log rotation can be configured via Nginx and log driver options
+- Provides a dashboard for visualizing the metrics collected by Prometheus.
+- Default dashboards can be customized for both system and application metrics.
 
----
+### 8. **Loki and Promtail**
 
-## 📸 Frontend Screenshot
+- Loki collects logs from the services.
+- Promtail is responsible for shipping logs from containers to Loki.
 
-![Funny frontend](https://via.placeholder.com/600x300.png?text=Funny+Frontend+UI)
+## Monitoring & Logging
 
----
+### Prometheus Configuration
+
+Prometheus collects system and application metrics. It scrapes data at defined intervals from the services:
+
+- **system metrics** (CPU, memory, disk usage)
+- **application metrics** (request count, response time)
+
+### Grafana Configuration
+
+Grafana is connected to Prometheus as a data source. You can access Grafana at `http://localhost:3000` and use the built-in dashboards to monitor:
+
+- **System Health**: CPU usage, memory usage, disk space.
+- **Application Health**: Response times, request counts, error rates.
+
+### Loki and Promtail
+
+Loki collects logs from all services, and Promtail is configured to push logs to Loki. You can visualize logs in Grafana as well.
+
+### Log Aggregation
+
+Logs are aggregated and can be viewed from the Grafana interface by querying Loki data.
+
+## Security and Rate Limiting
+
+Nginx is configured with:
+
+- **Security Headers**: For better security and protection against attacks.
+- **Rate Limiting**: To protect the API from too many requests.
+
+## GitHub Actions
+
+GitHub Actions is set up for CI/CD. It will automatically build and test the Docker containers on every push. The `.github/workflows/docker-build.yml` file contains the configuration for this workflow:
+
+## Conclusion
+
+This project sets up a fully containerized application with integrated monitoring and logging. By using Docker Compose, you can easily manage multi-container setups for development and production. Prometheus, Grafana, Loki, and Nginx make it scalable and easy to monitor, while GitHub Actions provides CI/CD automation.
+
