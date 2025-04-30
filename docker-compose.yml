@@ -1,0 +1,92 @@
+version: '3.8'
+
+services:
+  # API service
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: api-service
+    environment:
+      - NODE_ENV=production
+      - MONGO_URI=mongodb://mongo:27017/mydb
+      - REDIS_URI=redis://redis:6379
+    ports:
+      - "5005:5005"
+    networks:
+      - app-network
+    depends_on:
+      - mongo
+      - redis
+    volumes:
+      - api-data:/app/data
+
+  # Web service (React frontend)
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: web-service
+    environment:
+      - REACT_APP_API_URL=http://api:5000
+    ports:
+      - "3000:3000"
+    networks:
+      - app-network
+    depends_on:
+      - api
+    volumes:
+      - web-data:/app/build
+
+  # MongoDB service
+  mongo:
+    image: mongo:latest
+    container_name: mongo-db
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=rootpassword
+    ports:
+      - "27017:27017"
+    networks:
+      - app-network
+    volumes:
+      - mongo-data:/data/db
+
+  # Redis service
+  redis:
+    image: redis:latest
+    container_name: redis-cache
+    ports:
+      - "6379:6379"
+    networks:
+      - app-network
+    volumes:
+      - redis-data:/data
+
+  # Nginx reverse proxy
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: nginx-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./logs/nginx:/var/log/nginx
+    networks:
+      - app-network
+    depends_on:
+      - web
+      - api
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  api-data:
+  web-data:
+  mongo-data:
+  redis-data:
