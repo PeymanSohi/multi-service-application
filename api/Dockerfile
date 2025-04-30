@@ -1,19 +1,19 @@
-# Stage 1: Build stage
-FROM node:16 AS build
+# Stage 1: Build the application
+FROM node:18 AS build
 
 WORKDIR /app
 
-COPY package.json .
+COPY package.json package-lock.json ./
 RUN npm install
+
 COPY . .
 
-# Stage 2: Runtime stage
-FROM node:16-slim
+# Stage 2: Set up the production environment
+FROM node:18-slim
 
 WORKDIR /app
 
 COPY --from=build /app /app
+RUN npm install --production
 
-EXPOSE 5005
-
-CMD ["node", "server.js"]
+CMD ["npm", "start"]
